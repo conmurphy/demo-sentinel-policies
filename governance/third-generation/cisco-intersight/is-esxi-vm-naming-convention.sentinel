@@ -1,0 +1,23 @@
+# This policy uses the Sentinel tfplan/v2 import to require that
+# all ESXi Virtual Machines created by Intersight respect the corporate naming convention
+# All VMs *must* have the '-tf' suffix.
+
+# Import common-functions/tfplan-functions/tfplan-functions.sentinel
+# with alias "plan"
+import "tfplan-functions" as plan
+
+# Intersight ESXi Naming Convention
+vmNamingConvention = ".*-tf$"
+
+# Get all VMs
+allVMs = plan.find_resources("intersight_virtualization_virtual_machine")
+
+# Filter to VMs with invalid naming convention
+# Warnings will be printed for all violations since the last parameter is true
+outOfPolicyVMs = plan.filter_attribute_does_not_match_regex(allVMs, "name", vmNamingConvention, true)
+
+# Main rule
+validated = length(outOfPolicyVMs["messages"]) is 0
+main = rule {
+  validated
+}
